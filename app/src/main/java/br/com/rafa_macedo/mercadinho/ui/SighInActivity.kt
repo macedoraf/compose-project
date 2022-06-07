@@ -13,6 +13,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +25,8 @@ import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInEffects
 import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInViewModel
 import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInState
 import br.com.rafa_macedo.mercadinho.ui.theme.MercadinhoTheme
+import kotlinx.coroutines.flow.Flow
+import java.security.Key
 
 class SighInActivity : ComponentActivity(), MainInteractor {
 
@@ -33,33 +37,52 @@ class SighInActivity : ComponentActivity(), MainInteractor {
         setContent {
             val viewState by viewModel.viewState.collectAsState()
             val viewEffects = viewModel.viewEffects
+            EffectsHandler(viewEffects = viewEffects)
+            Screen(viewState = viewState)
+        }
+    }
 
-            LaunchedEffect(key1 = viewEffects) {
-                viewEffects.collect { effects ->
-                    when (effects) {
-                        SighInEffects.ShowDatePicker -> {}
-                    }
+    @Composable
+    private fun EffectsHandler(viewEffects: Flow<SighInEffects>) {
+        LaunchedEffect(key1 = viewEffects) {
+            viewEffects.collect { effects ->
+                when (effects) {
+                    SighInEffects.ShowDatePicker -> {}
                 }
             }
+        }
+    }
 
-            Screen(viewState = viewState)
+    @Composable
+    private fun Screen(viewState: SighInState) {
+        Column {
+            TextFieldForm(textFieldStates = viewState.textFieldStates)
+            SubmitButton(submitButtonState = viewState.submitButtonState)
+        }
+    }
+
+    @Composable
+    private fun SubmitButton(submitButtonState: SighInState.SubmitButtonState) {
+        Button(
+            onClick = { viewModel.submitForm() }, modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text(text = submitButtonState.description)
         }
     }
 
 
     @Composable
-    private fun Screen(viewState: SighInState) {
-        LazyColumn(
-            Modifier
-        ) {
-            items(items = viewState.textFieldStates.toList()) { keyValue ->
+    private fun TextFieldForm(textFieldStates: SnapshotStateMap<Int, SighInState.TextFieldState>) {
+        LazyColumn {
+            items(items = textFieldStates.toList()) { keyValue ->
                 keyValue.second.let { textFieldState ->
                     TextFieldRow(label = textFieldState.label,
                         text = textFieldState.text,
                         onTextChange = {
                             viewModel.onTextFieldChange(
-                                keyValue.first,
-                                textFieldState.copy(text = it)
+                                keyValue.first, textFieldState.copy(text = it)
                             )
                         })
                 }
@@ -119,6 +142,8 @@ class SighInActivity : ComponentActivity(), MainInteractor {
     @Composable
     fun DefaultPreview() {
         MercadinhoTheme {
+            val viewState by viewModel.viewState.collectAsState()
+            Screen(viewState = viewState)
         }
     }
 

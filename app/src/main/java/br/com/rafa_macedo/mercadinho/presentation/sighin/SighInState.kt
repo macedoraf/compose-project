@@ -5,8 +5,17 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 
 data class SighInState(
     val birthDayState: BirthdayState,
-    val textFieldStates: SnapshotStateMap<Int, TextFieldState>
+    val textFieldStates: SnapshotStateMap<Int, TextFieldState>,
+    val submitButtonState: SubmitButtonState
 ) {
+
+
+    data class SubmitButtonState(val description: String) {
+        companion object {
+            val Initial = SubmitButtonState("Cadastrar")
+        }
+    }
+
     companion object {
         private const val NAME = 0
         private const val LAST_NAME = 1
@@ -18,7 +27,8 @@ data class SighInState(
 
         val Initial = SighInState(
             BirthdayState.Initial,
-            initialTextFields
+            initialTextFields,
+            SighInState.SubmitButtonState.Initial
         )
     }
 
