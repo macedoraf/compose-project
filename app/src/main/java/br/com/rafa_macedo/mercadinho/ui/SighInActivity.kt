@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -18,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import br.com.rafa_macedo.mercadinho.presentation.MainInteractor
 import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInEffects
 import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInViewModel
-import br.com.rafa_macedo.mercadinho.presentation.sighin.SignInViewState
+import br.com.rafa_macedo.mercadinho.presentation.sighin.SighInState
 import br.com.rafa_macedo.mercadinho.ui.theme.MercadinhoTheme
 
 class SighInActivity : ComponentActivity(), MainInteractor {
@@ -45,36 +48,32 @@ class SighInActivity : ComponentActivity(), MainInteractor {
 
 
     @Composable
-    private fun Screen(viewState: SignInViewState) {
-        Column(
+    private fun Screen(viewState: SighInState) {
+        LazyColumn(
             Modifier
-                .fillMaxHeight()
-                .verticalScroll(
-                    state = rememberScrollState()
-                )
         ) {
-            TextFieldRow(
-                label = viewState.nameState.label.orEmpty(),
-                text = viewState.nameState.text.orEmpty(),
-                onTextChange = { viewState.nameState = viewState.nameState.copy(text = it) }
-            )
-//            TextFieldRow(description = "Sobrenome")
-//            DatePickerRow(description = "Data de nascimento")
-//            TextFieldRow(description = "Telefone")
-//            TextFieldRow(description = "E-mail")
-//            TextFieldRow(description = "Confirmação de E-mail")
-//            TextFieldRow(description = "Senha")
-//            TextFieldRow(description = "Confirmação de senha")
-            Button(
-                onClick = { /*TODO*/ }, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                Text(text = "Cadastrar")
+            items(items = viewState.textFieldStates.toList()) { keyValue ->
+                keyValue.second.let { textFieldState ->
+                    TextFieldRow(label = textFieldState.label,
+                        text = textFieldState.text,
+                        onTextChange = {
+                            viewModel.onTextFieldChange(
+                                keyValue.first,
+                                textFieldState.copy(text = it)
+                            )
+                        })
+                }
             }
         }
     }
 
+//    Button(
+//    onClick = { /*TODO*/ }, modifier = Modifier
+//    .fillMaxWidth()
+//    .padding(8.dp)
+//    ) {
+//        Text(text = "Cadastrar")
+//    }
 
     @Composable
     private fun DatePickerRow(description: String) {
@@ -98,12 +97,12 @@ class SighInActivity : ComponentActivity(), MainInteractor {
     }
 
     @Composable
-    fun TextFieldRow(label: String, text: String, onTextChange: (String) -> Unit) {
+    fun TextFieldRow(label: String?, text: String?, onTextChange: (String) -> Unit) {
         Row {
             TextField(
-                value = text,
+                value = text.orEmpty(),
                 onValueChange = onTextChange,
-                label = { Text(text = label) },
+                label = { Text(text = label.orEmpty()) },
                 maxLines = 1,
                 modifier = Modifier
                     .fillMaxWidth()

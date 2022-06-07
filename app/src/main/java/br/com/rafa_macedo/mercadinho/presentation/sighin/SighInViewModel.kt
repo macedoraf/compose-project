@@ -3,7 +3,6 @@ package br.com.rafa_macedo.mercadinho.presentation.sighin
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.rafa_macedo.mercadinho.utils.SingleShotEventBus
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +12,7 @@ import kotlinx.coroutines.launch
 class SighInViewModel : ViewModel() {
 
     //View States
-    private val _viewState = MutableStateFlow(SignInViewState.Initial)
+    private val _viewState = MutableStateFlow(SighInState.Initial)
     val viewState = _viewState.asStateFlow()
 
     // Actions
@@ -22,6 +21,12 @@ class SighInViewModel : ViewModel() {
     //Effects
     private val _viewEffects = SingleShotEventBus<SighInEffects>()
     val viewEffects: Flow<SighInEffects> = _viewEffects.events
+
+    private fun onComponentStateChange(componentState: SighInState) {
+        viewModelScope.launch {
+            _viewState.emit(componentState)
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -46,5 +51,11 @@ class SighInViewModel : ViewModel() {
         viewModelScope.launch {
             pendingActions.emit(SighInAction.Submit)
         }
+    }
+
+    fun onTextFieldChange(key: Int, value: SighInState.TextFieldState) {
+        val newState = _viewState.value.copy()
+        newState.textFieldStates.replace(key, value)
+        onComponentStateChange(newState)
     }
 }
